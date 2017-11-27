@@ -1,0 +1,295 @@
+<!DOCTYpe html>
+<html>
+    <body>
+        <p id = "a123">13456789</p>
+        <p id = "a124">13456789</p>
+    </body>
+    <script>
+        var yposition=0,xposition=0;
+        var board = Array(10);
+        var block =
+        [
+            /******************
+                ■ ■  block
+                ■ ■
+            ******************/
+            [
+                [
+                    [1,1,0,0],
+                    [1,1,0,0],
+                    [0,0,0,0],
+                    [0,0,0,0],
+                ],
+                [
+                    [1,1,0,0],
+                    [1,1,0,0],
+                    [0,0,0,0],
+                    [0,0,0,0],
+                ],
+                [
+                    [1,1,0,0],
+                    [1,1,0,0],
+                    [0,0,0,0],
+                    [0,0,0,0],
+                ],
+                [
+                    [1,1,0,0],
+                    [1,1,0,0],
+                    [0,0,0,0],
+                    [0,0,0,0],
+                ]
+
+            ],
+            
+            /******************
+               ■ ■ ■ ■  block
+            ******************/
+            [
+                [
+                    [1,0,0,0],
+                    [1,0,0,0],
+                    [1,0,0,0],
+                    [1,0,0,0],
+                ],
+                [
+                    [1,1,1,1],
+                    [0,0,0,0],
+                    [0,0,0,0],
+                    [0,0,0,0],
+                ],
+                [
+                    [1,0,0,0],
+                    [1,0,0,0],
+                    [1,0,0,0],
+                    [1,0,0,0],
+                ],
+                [
+                    [1,1,1,1],
+                    [0,0,0,0],
+                    [0,0,0,0],
+                    [0,0,0,0],
+                ]
+            ],
+
+            /******************
+                 ■
+               ■ ■ ■  block
+            ******************/
+            [
+                [
+                    [0,1,0,0],
+                    [1,1,1,0],
+                    [0,0,0,0],
+                    [0,0,0,0],
+                ],
+                [
+                    [1,0,0,0],
+                    [1,1,0,0],
+                    [1,0,0,0],
+                    [0,0,0,0],
+                ],
+                [
+                    [1,1,1,0],
+                    [0,1,0,0],
+                    [0,0,0,0],
+                    [0,0,0,0],
+                ],
+                [
+                    [0,1,0,0],
+                    [1,1,0,0],
+                    [0,1,0,0],
+                    [0,0,0,0],
+                ]
+            ],
+            /******************
+                 ■ ■
+               ■ ■    block
+            ******************/
+            [
+                [
+                    [1,0,0,0],
+                    [1,1,0,0],
+                    [0,1,0,0],
+                    [0,0,0,0],
+                ],
+                [
+                    [0,1,1,0],
+                    [1,1,0,0],
+                    [0,0,0,0],
+                    [0,0,0,0],
+                ],
+                [
+                    [1,0,0,0],
+                    [1,1,0,0],
+                    [0,1,0,0],
+                    [0,0,0,0],
+                ],
+                [
+                    [0,1,1,0],
+                    [1,1,0,0],
+                    [0,0,0,0],
+                    [0,0,0,0],
+                ]
+            ],
+            /******************
+               ■ ■    block
+                 ■ ■
+            ******************/
+            [
+                [
+                    [0,1,0,0],
+                    [1,1,0,0],
+                    [1,0,0,0],
+                    [0,0,0,0],
+                ],
+                [
+                    [1,1,0,0],
+                    [0,1,1,0],
+                    [0,0,0,0],
+                    [0,0,0,0],
+                ],
+                [
+                    [0,1,0,0],
+                    [1,1,0,0],
+                    [1,0,0,0],
+                    [0,0,0,0],
+                ],
+                [
+                    [1,1,0,0],
+                    [0,1,1,0],
+                    [0,0,0,0],
+                    [0,0,0,0],
+                ]
+            ]
+        ];
+        var i=0;
+        var x=0,y=0;
+        function aaaa(){
+            redrawBoard();
+            drawBlock((x),(y),1,1);
+            document.getElementById("a124").innerHTML=chackSideBlock(x,y,1,1);
+            
+            drawBoard();
+            if(chackDropd(x,y,1,1) ==0)y++;
+            else y=0;
+
+            if(chackSideBlock(x,y,1,1) ==0)x++;
+            else x=2;
+
+            setTimeout(function(){ aaaa() }, 1000);
+        }
+        function fixBlock(x,y,pos,blk){
+            var blklen = getBlockLength(pos,blk);
+            if((x<0) || (y<0) || (x>7-blklen[1]) || (y>10-blklen[0]))throw "Position is out of range<br/>"
+            for(var i=0;i<4;i++){
+                for(var j=0;j<4;j++){
+                    if(block[blk][pos][i][j]==1)board[y+i][x+j]=2;
+                    //else board[y+i][x+j]=0;
+                }
+            }
+        }
+        function getBlockLength(pos,blk){
+            var lenght = new Array(2);
+            var maxlength=0,currentlenght=0;
+            var maxhight=0;
+            for(var i=0;i<4;i++){
+                for(var j=0;j<4;j++){
+                    if(block[blk][pos][i][j]!=0){
+                        currentlenght=j+1;
+                        maxhight=i+1;
+                    }
+                }
+                if(maxlength<=currentlenght)maxlength=currentlenght;
+                currentlenght = 0;
+            }
+            lenght[0]=maxhight;
+            lenght[1]=maxlength;
+            return lenght;
+        }
+        function chackSideBlock(x,y,pos,blk){
+            var blklen = getBlockLength(pos,blk);
+            if( (x==7-blklen[1]) || (x == 0))return 1;
+            for(var i=0;i<blklen[0];i++){
+                for(var j=0;j<blklen[1];j++){
+                    if(block[blk][pos][i][j]!=0){
+                        if((board[i+y][j+x-1]==2)||(board[i+y][j+x+1]==2))return 1;
+                    }
+                }
+            }
+            return 0;
+        }
+        function chackDropd(x,y,pos,blk){
+            var blklen = getBlockLength(pos,blk);
+            if( (y==10-blklen[0])){
+                fixBlock(x,y,pos,blk);
+                return 1;
+            }
+            else{
+                for(var i=0;i<blklen[1];i++){
+                    if(block[blk][pos][(blklen[0]-1)][i]==1){
+                        if(board[(blklen[0])+y][(x+i-1)]==2){
+                            fixBlock(x,y,pos,blk);
+                            return 1;
+                        }
+                    }
+                }  
+            }
+            return 0;
+                      
+        }
+        function drawBlock(x,y,pos,blk){
+            var blklen = getBlockLength(pos,blk);
+            if((x<0) || (y<0) || (x>7-blklen[1]) || (y>10-blklen[0]))throw "Position is out of range<br/>"
+            for(var i=0;i<4;i++){
+                for(var j=0;j<4;j++){
+                    if(block[blk][pos][i][j]==1)board[y+i][x+j]=1;
+                    //else board[y+i][x+j]=0;
+                }
+            }
+        }
+        function initBoard()
+        {
+            for(var i=0;i<10;i++){
+                board[i] = Array(7);
+            }
+        }
+        function redrawBoard()
+        {
+            for(var i=0;i<10;i++){
+                for(var j=0;j<7;j++){
+                    if(board[i][j]!=2)board[i][j]=0;
+                }
+            }
+        }
+        function drawBoard()
+        {
+            var boardstring="";
+            for(var i=0;i<10;i++){
+                for(var j=0;j<8;j++){
+                    if(j==7)boardstring+="<BR>";
+                    else if(board[i][j]==0)boardstring+='□';
+                    else if(board[i][j]==2)boardstring+='◆';
+                    else boardstring+='■';
+                }
+            }
+            document.getElementById("a123").innerHTML=boardstring;
+            return boardstring;
+        }
+
+        function keyPress(e)
+        {
+            document.getElementById("a123").innerHTML=e.keyCode;
+            switch(e.keyCode){
+                case 119 : break; //w
+                case 97 : break;  //a
+                case 115 : break; //s
+                case 100 : break; //d
+                default : break; //default
+            }
+        }
+        initBoard();
+        redrawBoard();
+        aaaa();
+        document.getElementsByTagName("body")[0].addEventListener("keypress",keyPress);  
+    </script>
+</html>
