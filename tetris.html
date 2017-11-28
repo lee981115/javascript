@@ -1,12 +1,21 @@
 <!DOCTYpe html>
 <html>
+    <head>
+        <style>
+
+        </style>
+    </head>
     <body>
-        <p id = "a123">13456789</p>
-        <p id = "a124">13456789</p>
+        <p id = "a123"></p>
+        <p id = "a124">Score 0point<br>Level 1</p>
     </body>
     <script>
-        var yposition=0,xposition=0;
-        var board = Array(10);
+        const BOARD_MAX_X = 15;
+        const BOARD_MAX_Y = 27;
+        const MAX_NUM_OF_CHANGE_Y = 20;
+        const INVISIBLE_BOARD_OUTLINE = 3;
+        const BLOCK_NUM = 5;
+        var board = Array(BOARD_MAX_Y);
         var block =
         [
             /******************
@@ -52,8 +61,8 @@
                     [1,0,0,0],
                 ],
                 [
-                    [1,1,1,1],
                     [0,0,0,0],
+                    [1,1,1,1],
                     [0,0,0,0],
                     [0,0,0,0],
                 ],
@@ -64,8 +73,8 @@
                     [1,0,0,0],
                 ],
                 [
-                    [1,1,1,1],
                     [0,0,0,0],
+                    [1,1,1,1],
                     [0,0,0,0],
                     [0,0,0,0],
                 ]
@@ -162,32 +171,108 @@
                 ]
             ]
         ];
-        var i=0;
-        var x=0,y=0;
-        function aaaa(){
-            redrawBoard();
-            drawBlock((x),(y),1,1);
-            document.getElementById("a124").innerHTML=chackSideBlock(x,y,1,1);
-            
-            drawBoard();
-            if(chackDropd(x,y,1,1) ==0)y++;
-            else y=0;
+        var x_pos=0,y_pos=0,blockPos=0,blockSet=0;
+        var xIncFlag=false,xDecFlag=false,blockPosChangeFlag=false;
+        var yChangeCnt=false;
+        var fastDropFlag = false;
+        var score=0,level=1,delayTime=10;
 
-            if(chackSideBlock(x,y,1,1) ==0)x++;
-            else x=2;
+        /******************
+           Block position
+           Move      
+        ******************/
+        function moveBlock(x,y,pos,blk)
+        {
+            if(yChangeCnt>=MAX_NUM_OF_CHANGE_Y){
+                if(chackDropd(x,y,blockPos,blk) ==0){
+                    if(fastDropFlag)fastDrop(x,y,blockPos,blk);
+                    else y_pos++;
+                    fastDropFlag = false;
+                }
+                else {
+                    y_pos=0;
+                    chackLineFill();
+                    chackgameOver();
+                    level =Math.floor(score/1000)+1;
+                    if(delayTime>=10)delayTime=10-level;
+                    document.getElementById("a124").innerHTML = "Score "+score+"point<br>Level "+level;
+                    randomizeBlock();
+                }
+                yChangeCnt=0;
+            }
+            else{
+                yChangeCnt++;
 
-            setTimeout(function(){ aaaa() }, 1000);
+                if(xIncFlag==true){
+                    xIncFlag=false;
+                    if((chackSideBlock(x,y,blockPos,blk)[0]!=true) && (chackSideBlock(x,y,blockPos,blk)[3]!=true))x_pos+=1;
+                    else x_pos+=0;
+                }
+
+                else if(xDecFlag==true){
+                    xDecFlag=false;
+                    if((chackSideBlock(x,y,blockPos,blk)[1]!=true) && (chackSideBlock(x,y,blockPos,blk)[2]!=true))x_pos-=1;
+                    else x_pos+=0;
+                }
+            }
+            if(blockPosChangeFlag==true){
+                blockPosChangeFlag=false;
+                if(!chackRotateEnable(x,y,blockPos,blk))blockPos=(blockPos+1)%4;
+            }
         }
+        /******************
+           if press 's'
+           Drop emidatly      
+        ******************/
+        function fastDrop(x,y,pos,blk)
+        {
+            while(!chackDropd(x, y_pos,pos,blk)){
+                y_pos++;
+            }
+        }
+        /******************
+           0 ~ BLOCK_NUM
+         random generater 
+        ******************/
+        function randomizeBlock()
+        {
+            blockSet = Math.floor(Math.random()*BLOCK_NUM);  
+            x_pos = Math.floor(BOARD_MAX_X/2);
+            blockPos=0;
+        }
+        /******************
+          block rotate
+          possoblity chack
+        ******************/
+        function chackRotateEnable(x,y,pos,blk){
+            var blklen = getBlockLength(pos=(pos+1)%4,blk);
+            if((x<0) || (y<0) || (x>BOARD_MAX_X-blklen[1]) || (y>BOARD_MAX_Y-blklen[0]))return 1;
+            for(var i=0;i<blklen[0];i++){
+                for(var j=0;j<blklen[1];j++){
+                    if(block[blk][pos][i][j]!=0){
+                        if(board[i+y][j+x]==2)return 1;
+                    }
+                }
+            }
+            return 0;
+        }
+        /******************
+         fix block at Board
+         fixed num = 2
+        ******************/
         function fixBlock(x,y,pos,blk){
             var blklen = getBlockLength(pos,blk);
-            if((x<0) || (y<0) || (x>7-blklen[1]) || (y>10-blklen[0]))throw "Position is out of range<br/>"
+            if((x<0) || (y<0) || (x>BOARD_MAX_X-blklen[1]) || (y>BOARD_MAX_Y-blklen[0]))throw "Position is out of range<br/>"
             for(var i=0;i<4;i++){
                 for(var j=0;j<4;j++){
                     if(block[blk][pos][i][j]==1)board[y+i][x+j]=2;
-                    //else board[y+i][x+j]=0;
                 }
             }
         }
+        /******************
+          get [0,0] to 
+          block W,H
+        ******************/
         function getBlockLength(pos,blk){
             var lenght = new Array(2);
             var maxlength=0,currentlenght=0;
@@ -206,67 +291,116 @@
             lenght[1]=maxlength;
             return lenght;
         }
+        /******************
+           chack bloard out
+         & fixed block
+        ******************/
         function chackSideBlock(x,y,pos,blk){
             var blklen = getBlockLength(pos,blk);
-            if( (x==7-blklen[1]) || (x == 0))return 1;
+            var sideFlag=[false,false,false,false];
+
+            if( x>=BOARD_MAX_X-blklen[1])sideFlag[0]=true;
+            else if(x == 0)sideFlag[1]=true;
+
             for(var i=0;i<blklen[0];i++){
                 for(var j=0;j<blklen[1];j++){
+
                     if(block[blk][pos][i][j]!=0){
-                        if((board[i+y][j+x-1]==2)||(board[i+y][j+x+1]==2))return 1;
+                        if(board[i+y][j+x-1]==2)sideFlag[2]=true;
+                        if(board[i+y][j+x+1]==2)sideFlag[3]=true;
                     }
+                    
                 }
             }
-            return 0;
+            return sideFlag;
         }
+
+        /******************
+         chack bloard btm
+         & fixed block
+        ******************/
         function chackDropd(x,y,pos,blk){
             var blklen = getBlockLength(pos,blk);
-            if( (y==10-blklen[0])){
+            if( (y==BOARD_MAX_Y-blklen[0])){
                 fixBlock(x,y,pos,blk);
                 return 1;
             }
             else{
-                for(var i=0;i<blklen[1];i++){
-                    if(block[blk][pos][(blklen[0]-1)][i]==1){
-                        if(board[(blklen[0])+y][(x+i-1)]==2){
-                            fixBlock(x,y,pos,blk);
-                            return 1;
+
+                for(var i=0;i<blklen[0];i++){
+                    for(var j=0;j<blklen[1];j++){
+
+                        if(block[blk][pos][i][j]!=0){
+                            if(board[i+y+1][j+x]==2){
+                                fixBlock(x,y,pos,blk);
+                                return 1;
+                            }
                         }
                     }
-                }  
+                }
             }
             return 0;
-                      
         }
+        /******************
+         draw falling block
+         doping block = '1'
+        ******************/
         function drawBlock(x,y,pos,blk){
             var blklen = getBlockLength(pos,blk);
-            if((x<0) || (y<0) || (x>7-blklen[1]) || (y>10-blklen[0]))throw "Position is out of range<br/>"
+            if((x<0) || (y<0) || (x>BOARD_MAX_X-blklen[1]) || (y>BOARD_MAX_Y-blklen[0]))throw "Position is out of range<br/>"
             for(var i=0;i<4;i++){
                 for(var j=0;j<4;j++){
                     if(block[blk][pos][i][j]==1)board[y+i][x+j]=1;
-                    //else board[y+i][x+j]=0;
                 }
             }
         }
+        /******************
+        create board array
+        ******************/
         function initBoard()
         {
-            for(var i=0;i<10;i++){
-                board[i] = Array(7);
+            for(var i=0;i<BOARD_MAX_Y;i++){
+                board[i] = Array(BOARD_MAX_X);
             }
         }
+        /******************
+         refrashing board
+         whidout fixed block
+        ******************/
         function redrawBoard()
         {
-            for(var i=0;i<10;i++){
-                for(var j=0;j<7;j++){
+            for(var i=0;i<BOARD_MAX_Y;i++){
+                for(var j=0;j<BOARD_MAX_X;j++){
                     if(board[i][j]!=2)board[i][j]=0;
                 }
             }
         }
-        function drawBoard()
+        /******************
+         "Game over" toast
+         & score reset
+        ******************/
+        function gameOver()
         {
+            alert("GAME OVER");
+            alert(" Your Score Is "+score);
+            for(var i=0;i<BOARD_MAX_Y;i++){
+                for(var j=0;j<BOARD_MAX_X;j++){
+                    board[i][j]=0;
+                }
+            }
+            score = 0;
+            level = 0;
+            delayTime=10;
+        }
+        /******************
+         Draw board at HTML
+         Text
+        ******************/
+        function drawBoard(){
             var boardstring="";
-            for(var i=0;i<10;i++){
-                for(var j=0;j<8;j++){
-                    if(j==7)boardstring+="<BR>";
+            for(var i=INVISIBLE_BOARD_OUTLINE;i<BOARD_MAX_Y;i++){
+                for(var j=0;j<BOARD_MAX_X+1;j++){
+                    if(j==BOARD_MAX_X)boardstring+="<br>";
                     else if(board[i][j]==0)boardstring+='□';
                     else if(board[i][j]==2)boardstring+='◆';
                     else boardstring+='■';
@@ -275,21 +409,77 @@
             document.getElementById("a123").innerHTML=boardstring;
             return boardstring;
         }
-
+        /******************
+         Key event listener
+        ******************/
         function keyPress(e)
         {
-            document.getElementById("a123").innerHTML=e.keyCode;
-            switch(e.keyCode){
-                case 119 : break; //w
-                case 97 : break;  //a
-                case 115 : break; //s
-                case 100 : break; //d
+            var key=e.keyCode;
+            switch(key){
+                case 119 : blockPosChangeFlag=true;break; //w
+                case 115 : fastDropFlag=true;break; //s
+                case 97 : xIncFlag=false;xDecFlag=true;break;  //a
+                case 100 : xIncFlag=true;xDecFlag=false;break; //d
                 default : break; //default
             }
         }
+        /******************
+         breake line, drop
+        ******************/
+        function freezBoardLine(line){
+            for(var i=line;i>=0;i--){
+                for(var j=0;j<BOARD_MAX_X;j++){
+                    if(i!=0)board[i][j]=board[i-1][j];
+                    else board[i][j]=0;
+                }
+            }
+            score +=100;
+        }
+        /******************
+        block position chack
+        & game over chack
+        ******************/
+        function chackgameOver()
+        {
+            for(var i=0;i<INVISIBLE_BOARD_OUTLINE;i++){
+                for(var j=0;j<BOARD_MAX_X-1;j++){
+                    if(board[i][j]==2)gameOver();
+                }
+            }
+        }
+        /******************
+        if line if filld 
+         breake the block
+        ******************/
+        function chackLineFill(){
+            var lineCnt=0;
+            for(var i=BOARD_MAX_Y-1;i>0;i--){
+                for(var j=0;j<BOARD_MAX_X;j++){
+                    if(board[i][j]==2)lineCnt++;
+                }
+                if(lineCnt >= BOARD_MAX_X){
+                    freezBoardLine(i);
+                    i++;
+                }
+                lineCnt = 0;
+            }
+
+        }
+        /******************
+           main
+        ******************/
+        function main(){
+            redrawBoard();
+            drawBlock(x_pos,y_pos,blockPos,blockSet);      
+            drawBoard();
+            moveBlock(x_pos,y_pos,blockPos,blockSet);
+            setTimeout(function(){ main() },delayTime );
+        }
         initBoard();
         redrawBoard();
-        aaaa();
+        randomizeBlock();
+        main();
+        
         document.getElementsByTagName("body")[0].addEventListener("keypress",keyPress);  
     </script>
 </html>
